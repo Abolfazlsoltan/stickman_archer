@@ -1296,10 +1296,6 @@ function hook(k,v){
     document.documentElement.style.setProperty('--stage-accent',THEMES[v].accent);
     $$('.themebtn').forEach(b=>b.classList.toggle('on',b.dataset.theme===v));
   }
-  else if(k==='gear'){
-    $$('.gearbtn').forEach(b=>b.classList.toggle('on',b.dataset.gear===v));
-    $('#btnAtk').innerHTML='<small>'+GEARS[v].icon+'</small>حمله';
-  }
   else if(k==='surface'){
     S.friction=SURF[v].mu;
     (bindings.get('friction')||[]).forEach(f=>f(S.friction));
