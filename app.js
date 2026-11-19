@@ -231,7 +231,7 @@ function physicsStep(dt){
   bag.v+=(-(g/Math.max(40,bag.len))*Math.sin(bag.a)-bag.v*1.1)*dt; bag.a+=bag.v*dt;
   bag.flash=Math.max(0,bag.flash-dt*3); target.flash=Math.max(0,target.flash-dt*3);
   // cloth (fixed step verlet)
-  clothStep(cape,capeAnchor,dt,9*S.heightScale,1);
+  if(S.cape)clothStep(cape,capeAnchor,dt,9*S.heightScale,1);
   if(S.helmet&&S.plume)clothStep(plume,plumeAnchor,dt,7*S.heightScale,1.5);
 }
 /* cloth */
@@ -575,7 +575,7 @@ function charShapes(J,p){
   live.tip=gearOut.tip;
   return out;
 }
-function gearShapes(){return {tip:null};}
+function gearShapes(){const out=[];out.tip=null;return out;}
 /* ---------------- fx ---------------- */
 const parts=[],projs=[],sticks=[],trail=[],ghostBuf=[];
 const PCAP=()=>S.quality==='high'?420:S.quality==='med'?240:110;
