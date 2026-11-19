@@ -259,12 +259,8 @@ function clothStep(c,anchor,dt,seg,windMul){
 let active={name:'idle',t:0,fired:{},once:false};
 function armSwing(T,C,amp,bend){
   const sN=clamp(((footPos(0).x-body.x)*C.dir)*.014,-.85,.85);
-  const hold=S.gear!=='bare', a=amp*(hold?.5:1);
-  T.shN=-sN*a+(hold?.35:.05); T.shF=sN*a+(hold?.2:-.05);
-  T.elN=bend+Math.max(0,-sN)*.5+(hold?.5:0); T.elF=bend+.1+Math.max(0,sN)*.4+(hold?.6:0);
-  if(S.gear==='miner'){T.shN=1.15;T.elN=1.5;}
-  if(S.gear==='spear'){T.shN=.55;T.elN=.95;}
-  if(S.gear==='staff'){T.shN=.5;T.elN=.75;}
+  T.shN=-sN*amp+.05; T.shF=sN*amp-.05;
+  T.elN=bend+Math.max(0,-sN)*.5; T.elF=bend+.1+Math.max(0,sN)*.4;
 }
 const CLIPS={
   idle:{label:'ایستاده',icon:'🧍',dur:4.4,kind:'state',resp:13,fn:(t,T)=>{
@@ -300,76 +296,15 @@ const CLIPS={
     T.shN=2.35+.08*Math.sin(t*1.5);T.elN=.55+.38*w;T.wrN=.2*w;T.shF=-.12;T.elF=.3;
     T.torso=.04-.05*Math.sin(t*1.5);T.head=.12+.05*w;
     T.hipH=standH()*(.955+.008*Math.sin(t*1.5));T.rootDX=1.5*Math.sin(t*.8);}},
-  kick:{label:'ضربه پا',icon:'🥋',dur:.86,kind:'action',resp:28,fn:(t,T,C)=>{
-    T.stance=[-6,-14];const s=eio(q(t,.2,.42)),r=eio(q(t,.5,.86));
-    const kx=body.x+C.dir*(-10+104*s-64*r), ky=body.y-(28+80*s-72*r);
-    T.footN={x:kx,y:ky};T.footAngleN=.5*s;
-    T.hipH=standH()*(.92-.06*s+.04*r);T.torso=.05-.34*s+.3*r;T.chest=-.05-.1*s;T.head=.1*s;
-    T.shN=.3-1.1*s+.9*r;T.elN=.5+.7*s;T.shF=-.2+.9*s-.7*r;T.elF=.4+.5*s;T.rootDX=-3-4*s+5*r;
-    if(!C.fired.sw&&t>.2){C.fired.sw=1;sfx.swoosh();body.vx+=C.dir*70;}
-    if(!C.fired.hit&&t>.34){C.fired.hit=1;hitCheck(kx,ky,'kick');}}},
-  sword:{label:'شمشیر',icon:'⚔️',dur:.78,kind:'action',gear:'sword',resp:30,fn:(t,T,C)=>{
-    T.stance=[16,-18];const w=eio(q(t,0,.24)),s=eo(q(t,.24,.44)),r=eio(q(t,.46,.78));
-    T.shN=lerp(lerp(.5,2.75,w),.45,s);T.shN=lerp(T.shN,.55,r);
-    T.elN=lerp(lerp(1.4,.45,w),.12,s);T.elN=lerp(T.elN,1.4,r);T.wrN=-.2*w+.3*s;
-    T.torso=lerp(lerp(.14,-.18,w),.34,s);T.torso=lerp(T.torso,.18,r);T.chest=-.06+.12*s;
-    T.rootDX=-4*w+10*s-6*r;T.hipH=standH()*(.88-.04*w+.02*s+.06*r);
-    T.shF=.7+.3*s;T.elF=1.6-.3*s;
-    if(!C.fired.sw&&t>.26){C.fired.sw=1;sfx.swoosh();body.vx+=C.dir*130;}
-    if(!C.fired.hit&&t>.37){C.fired.hit=1;const h=live.J.handN;hitCheck(h.x+C.dir*46,h.y+10,'slash');}}},
-  spear:{label:'نیزه',icon:'🔱',dur:.82,kind:'action',gear:'spear',resp:28,fn:(t,T,C)=>{
-    T.stance=[18,-20];const w=eio(q(t,0,.3)),s=eo(q(t,.3,.46)),r=eio(q(t,.52,.82));
-    T.shN=lerp(lerp(.5,.05,w),1.45,s);T.shN=lerp(T.shN,.55,r);
-    T.elN=lerp(lerp(1.3,1.75,w),.06,s);T.elN=lerp(T.elN,1.0,r);
-    T.shF=.6+.5*s;T.elF=1.5-.5*s;T.torso=lerp(lerp(.14,-.1,w),.3,s);T.torso=lerp(T.torso,.18,r);
-    T.rootDX=-5*w+14*s-8*r;T.hipH=standH()*(.87-.03*w+.05*r);
-    if(!C.fired.sw&&t>.3){C.fired.sw=1;sfx.swoosh(.8);body.vx+=C.dir*175;}
-    if(!C.fired.hit&&t>.42){C.fired.hit=1;const h=live.J.handN;hitCheck(h.x+C.dir*84,h.y,'slash');}}},
-  bow:{label:'کمان',icon:'🏹',dur:1.2,kind:'action',gear:'bow',resp:24,fn:(t,T,C)=>{
-    T.stance=[12,-16];T.hipH=standH()*.93;T.torso=.08;T.head=-.04;T.rootDX=-2;
-    const d=eio(q(t,.15,.55)),rel=q(t,.62,.72),rec=eio(q(t,.78,1.2));
-    const cy=body.y-T.hipH-rig().spine*.85;
-    T.handF={x:body.x+C.dir*(48-8*rel-14*rec),y:cy-4};
-    T.handN={x:body.x+C.dir*(22-32*d+38*rel-6*rec),y:cy+3};
-    T.bowDraw=d*(1-rel);
-    if(!C.fired.rel&&t>.62){C.fired.rel=1;shootArrow();body.vx-=C.dir*45;}}},
-  mine:{label:'کلنگ',icon:'⛏️',dur:1,kind:'action',gear:'miner',resp:26,fn:(t,T,C)=>{
-    T.stance=[14,-16];const u=eio(q(t,0,.36)),d=eo(q(t,.36,.52)),r=eio(q(t,.56,1));
-    T.shN=lerp(lerp(.6,2.5,u),.25,d);T.shN=lerp(T.shN,.6,r);
-    T.elN=lerp(lerp(1.2,.5,u),.15,d);T.elN=lerp(T.elN,1.2,r);
-    T.shF=lerp(lerp(.5,2.2,u),.35,d);T.shF=lerp(T.shF,.5,r);
-    T.elF=lerp(lerp(1.3,.6,u),.2,d);T.elF=lerp(T.elF,1.3,r);
-    T.torso=lerp(lerp(.1,-.2,u),.5,d);T.torso=lerp(T.torso,.1,r);
-    T.hipH=standH()*(.9-.05*u+.02*d+.05*r);
-    if(!C.fired.hit&&t>.5){C.fired.hit=1;mineHit();}}},
-  cast:{label:'جادو',icon:'✨',dur:1.5,kind:'action',gear:'staff',resp:20,fn:(t,T,C)=>{
-    T.stance=[10,-14];const u=eio(q(t,0,.5)),ch=q(t,.5,.95),rel=eo(q(t,.95,1.08)),r=eio(q(t,1.1,1.5));
-    T.shN=lerp(lerp(.4,2.6,u),1.35,rel);T.shN=lerp(T.shN,.5,r);
-    T.elN=lerp(lerp(.9,.25,u),.1,rel);T.elN=lerp(T.elN,.75,r);
-    T.shF=.3+.4*u-.3*rel;T.elF=.9+.4*ch;T.torso=-.06*u+.16*rel;T.head=-.1*u;
-    T.hipH=standH()*(.94+.03*u-.02*rel);T.orb=Math.max(ch,rel*.6)*(1-r);
-    if(ch>0&&ch<1&&Math.random()<.5){const h=live.J.handN;
-      spawn('magic',h.x+C.dir*40+rnd(30,-30),h.y-20+rnd(30,-30),1,{vx:0,vy:-rnd(30),col:S.teamColor});}
-    if(!C.fired.rel&&t>.96){C.fired.rel=1;castRelease();}}},
   victory:{label:'پیروزی',icon:'🏆',dur:1.7,kind:'action',resp:16,fn:(t,T,C)=>{
     T.stance=[12,-12];const b=Math.sin(t*4.2);
     T.shN=2.5+.12*b;T.elN=.35+.1*b;T.shF=2.4-.12*b;T.elF=.4-.1*b;
     T.torso=-.06;T.head=-.12;T.hipH=standH()*(.97+.02*b);
     if(!C.fired.j1&&t>.25){C.fired.j1=1;if(body.onGround){body.vy=-S.jump*.45;body.onGround=false;sqv=.8;sfx.jump(.6);dust(body.x,body.y,6,1);}}
     if(!C.fired.j2&&t>.95){C.fired.j2=1;if(body.onGround){body.vy=-S.jump*.45;body.onGround=false;sqv=.8;sfx.jump(.6);dust(body.x,body.y,6,1);}}}},
-  fall:{label:'سقوط',icon:'💥',dur:2.7,kind:'action',resp:13,snapAll:true,fn:(t,T,C)=>{
-    const dn=eio(q(t,0,.55)),up=eio(q(t,1.75,2.7)),k=dn*(1-up);
-    T.bodyRot=-1.45*k;T.hipH=lerp(standH()*.95,14,k);
-    T.hipN=lerp(.06,2.55,k);T.knN=lerp(.1,.35,k);T.anN=lerp(0,.2,k);
-    T.hipF=lerp(-.06,2.35,k);T.knF=lerp(.12,.6,k);T.anF=lerp(0,.15,k);
-    T.shN=lerp(.1,1.5,k);T.elN=lerp(.22,.5,k);T.shF=lerp(-.08,1.1,k);T.elF=lerp(.26,.8,k);
-    T.torso=lerp(.05,.2,k);T.head=lerp(0,.25,k);
-    T.air=k>.25||(!body.onGround&&t<.8);
-    if(!C.fired.push&&t<.03){C.fired.push=1;body.vx-=C.dir*150;body.vy=-235;body.onGround=false;sfx.hit(.8);shake=9;}
-    if(!C.fired.dust&&body.onGround&&t>.3){C.fired.dust=1;dust(body.x,body.y,16,1.4);sfx.land(520);}}},
   custom:{hidden:true,dur:1,kind:'state',resp:60,fn:(t,T)=>{if(customPose)Object.assign(T,customPose);T.custom=true;}}
 };
-const CLIP_ORDER=['idle','guard','walk','run','jump','wave','victory','fall'];
+const CLIP_ORDER=['idle','guard','walk','run','jump','wave','victory'];
 const SAFE_CLIPS=new Set(CLIP_ORDER);
 const POSES={
   std:{label:'استاندارد',icon:'🧍',make:()=>basePose()},
@@ -640,77 +575,7 @@ function charShapes(J,p){
   live.tip=gearOut.tip;
   return out;
 }
-function gearShapes(J,p,th,fill,lw,dir){
-  const out=[],tech=THEMES[S.theme].tech;
-  const push=(d,f,lw2,stk,alpha=1,gl=0)=>out.push({d,fill:tech?rgba('#bfe9ff',.06):f,stroke:stk===undefined?(S.outline?THEMES[S.theme].outline:null):stk,lw:lw2===undefined?lw:lw2,alpha,glow:gl});
-  const steel=tech?'#bfe9ff':'#c9d3e0',steelD=tech?'#9fd0e8':'#8b95a6',wood=tech?'#cfe6f5':'#6b4526';
-  const aN=ang(J.elbowN,J.handN),aF=ang(J.elbowF,J.handF);
-  const fN=frame(J.handN,aN-.25*dir,dir),fF=frame(J.handF,aF,dir);
-  const G=S.gear;
-  if(G==='sword'||G==='club'||G==='spear'||G==='miner'||G==='staff'){
-    if(G==='sword'){
-      push(cap(...fN(-16,0),...fN(2,0),3.4,3.2),wood);
-      push(circ(...fN(-18,0),4),steelD);
-      push(poly([fN(2,-10),fN(6,-9),fN(6,9),fN(2,10)]),steelD);
-      push(poly([fN(6,-4.4),fN(56,-3.2),fN(66,0),fN(56,3.2),fN(6,4.4)]),steel);
-      push(poly([fN(8,-1.2),fN(54,-.8),fN(54,.8),fN(8,1.2)]),steelD,0,null,.7);
-      push(cap(...fN(-8,-2),...fN(-2,-2),1.6,1.6),S.teamColor,0,null);
-      out.tip={a:{x:fN(66,0)[0],y:fN(66,0)[1]},b:{x:fN(10,0)[0],y:fN(10,0)[1]}};
-    }
-    if(G==='club'){
-      push(cap(...fN(-14,0),...fN(50,0),4,11),wood);
-      for(let i=0;i<4;i++){const a=fN(24+i*8,-9),b=fN(28+i*8,-16),c=fN(32+i*8,-8);push(poly([a,b,c]),steelD);}
-      push(cap(...fN(-10,-2),...fN(-2,-2),2,2),S.teamColor,0,null);
-      out.tip={a:{x:fN(52,0)[0],y:fN(52,0)[1]},b:{x:fN(10,0)[0],y:fN(10,0)[1]}};
-    }
-    if(G==='spear'){
-      push(cap(...fN(-42,0),...fN(78,0),2.9,2.6),wood);
-      push(poly([fN(78,-5.4),fN(102,0),fN(78,5.4)]),steel);
-      push(circ(...fN(-44,0),3.4),steelD);
-      push(cap(...fN(-6,-3),...fN(6,-3),2.2,2.2),S.teamColor,0,null);
-      out.tip={a:{x:fN(102,0)[0],y:fN(102,0)[1]},b:{x:fN(30,0)[0],y:fN(30,0)[1]}};
-    }
-    if(G==='miner'){
-      push(cap(...fN(-18,0),...fN(54,0),3.2,3),wood);
-      push(`M${fN(40,-4)}Q${fN(64,-16)} ${fN(78,-6)}L${fN(73,-1)}Q${fN(60,-8)} ${fN(42,4)}Z`,steel);
-      push(poly([fN(34,-7),fN(46,-7),fN(46,7),fN(34,7)]),steelD);
-      push(cap(...fN(-12,-2),...fN(-4,-2),2,2),S.teamColor,0,null);
-      out.tip={a:{x:fN(78,-6)[0],y:fN(78,-6)[1]},b:{x:fN(30,0)[0],y:fN(30,0)[1]}};
-    }
-    if(G==='staff'){
-      push(cap(...fN(-32,0),...fN(64,0),3.1,2.8),wood);
-      const orb=fN(74,0),og=(p.orb||0);
-      push(`M${fN(58,-9)}Q${fN(70,-12)} ${fN(72,-3)}L${fN(66,-2)}Q${fN(64,-7)} ${fN(58,-5)}Z`,steelD);
-      push(`M${fN(58,9)}Q${fN(70,12)} ${fN(72,3)}L${fN(66,2)}Q${fN(64,7)} ${fN(58,5)}Z`,steelD);
-      push(circ(orb[0],orb[1],8+og*4),mix(S.teamColor,'#ffffff',.35),1.2,mix(S.teamColor,'#ffffff',.6),1,10+og*26);
-      push(circ(orb[0]-2,orb[1]-2,3),rgba('#ffffff',.8),0,null);
-      out.tip={a:{x:orb[0],y:orb[1]},b:{x:fN(20,0)[0],y:fN(20,0)[1]}};
-    }
-  }
-  if(G==='bow'){
-    const d=p.bowDraw||0;
-    push(`M${fF(0,-40)}Q${fF(24,0)} ${fF(0,40)}`,wood,4.6,wood);
-    push(`M${fF(0,-40)}L${fF(-6-d*20,0)}L${fF(0,40)}`,'none',1.3,tech?'#bfe9ff':'#efe4cb');
-    push(cap(...fF(-3,-6),...fF(3,-6),3.4,3.4),S.teamColor,0,null);
-    if(d>.04){
-      push(cap(...fF(-6-d*20,0),...fF(34,0),1.5,1.4),tech?'#bfe9ff':'#d9c9a4'),
-      push(poly([fF(34,-3),fF(44,0),fF(34,3)]),steel);
-      push(poly([fF(-6-d*20,-4),fF(2-d*20,0),fF(-6-d*20,4)]),S.teamColor,0,null);
-    }
-    out.tip={a:{x:fF(0,-40)[0],y:fF(0,-40)[1]},b:{x:fF(0,40)[0],y:fF(0,40)[1]}};
-  }
-  if(G==='sword'||G==='spear'){
-    const r=(G==='spear'?26:21)*S.heightScale;
-    const mid={x:lerp(J.elbowF.x,J.handF.x,.7),y:lerp(J.elbowF.y,J.handF.y,.7)};
-    const o={x:mid.x+dir*4,y:mid.y};
-    push(circ(o.x,o.y,r),tech?rgba('#bfe9ff',.06):mix(S.teamColor,'#2a1c14',.45),2.4,steelD);
-    push(circ(o.x,o.y,r*.72),'none',1.6,rgba(steel,.55));
-    push(poly([[o.x-dir*r*.34,o.y-r*.42],[o.x+dir*r*.36,o.y],[o.x-dir*r*.34,o.y+r*.42],[o.x-dir*r*.1,o.y]]),S.teamColor,0,null);
-    push(circ(o.x,o.y,r*.2),steel,1,steelD);
-  }
-  return out;
-}
-
+function gearShapes(){return {tip:null};}
 /* ---------------- fx ---------------- */
 const parts=[],projs=[],sticks=[],trail=[],ghostBuf=[];
 const PCAP=()=>S.quality==='high'?420:S.quality==='med'?240:110;
@@ -784,37 +649,6 @@ function updateFx(dt){
   if(axisInput()!==0)body.facing=axisInput()>0?1:-1;
 }
 let ghostTimer=0;
-function hitCheck(x,y,kind){
-  let hit=false;
-  spawn('spark',x,y,4,{sp:120,col:'#ffe6b0',life:.25,size:1.8});
-  if(S.props&&S.mode==='field'){
-    const bp=bagPos();
-    if(dist({x,y},bp)<56){bag.v+=(x<bp.x?1:-1)*3.4;bag.flash=1;hit=true;}
-    if(Math.abs(x-rock.x)<70&&y>-70){rock.hp++;spawn('chip',rock.x+rnd(20,-20),-30,10,{sp:180,col:'#9a8a72'});hit=true;}
-    if(Math.abs(x-target.x)<20&&Math.abs(y-target.y)<target.r+10){target.flash=1;hit=true;}
-  }
-  if(hit){stats.hits++;spark(x,y,16);sfx.hit(1);shake=Math.min(14,shake+7);}
-  return hit;
-}
-function mineHit(){
-  const L=rig(),x=body.x+body.facing*52,y=surfaceYAt(body.x+body.facing*52);
-  const nearRock=S.props&&S.mode==='field'&&Math.abs(x-rock.x)<90;
-  spawn('chip',nearRock?rock.x:x,y-6,12,{sp:210,col:nearRock?'#9a8a72':'#c9a24a'});
-  spawn('spark',nearRock?rock.x:x,y-8,7,{sp:150,col:'#ffd166',life:.4});
-  if(nearRock){rock.hp++;stats.hits++;}
-  dust(x,y,6,1);sfx.hit(.85);shake=Math.min(12,shake+5);
-}
-function shootArrow(){
-  const h=live.J.handF||{x:body.x,y:body.y-110};
-  projs.push({type:'arrow',x:h.x+body.facing*24,y:h.y,vx:body.facing*840,vy:-70,ang:0,life:5});
-  sfx.bow();spawn('dust',h.x,h.y,3,{sp:60,col:'#efe4cb',life:.3});
-}
-function castRelease(){
-  const h=live.J.handN||{x:body.x,y:body.y-110};
-  projs.push({type:'magic',x:h.x+body.facing*44,y:h.y-16,vx:body.facing*430,vy:-40,ang:0,life:3.4});
-  spawn('magic',h.x+body.facing*44,h.y-16,20,{sp:170,col:S.teamColor,life:.7});
-  sfx.magic();shake=Math.min(10,shake+4);
-}
 
 /* ---------------- audio ---------------- */
 const sfx=(()=>{
