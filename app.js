@@ -387,21 +387,22 @@
     const h = appearance.height;
     const l = appearance.limbs;
     return {
-      spine: 57 * h,
-      neck: 13 * h,
-      headOffset: 20 * h,
-      headRadius: 16.7 * appearance.head * h,
-      shoulderWidth: 37 * appearance.shoulders * h,
+      // تناسبات نزدیک به ریگ کلاسیک قبلی
+      spine: 46 * h,
+      neck: 11 * h,
+      headOffset: 15 * h,
+      headRadius: 14.6 * appearance.head * h,
+      shoulderWidth: 30 * appearance.shoulders * h,
       hipWidth: 20 * l * h,
-      upperArm: 42 * l * h,
-      forearm: 36 * l * h,
-      hand: 9 * l * h,
-      thigh: 73 * l * h,
-      shin: 70 * l * h,
-      footLength: 24 * l * h,
-      armWidth: (appearance.style === 'classic' ? 9 : appearance.style === 'armored' ? 14 : 12) * l * h,
-      legWidth: (appearance.style === 'classic' ? 11 : appearance.style === 'armored' ? 16 : 14) * l * h,
-      bodyWidth: (appearance.style === 'classic' ? 21 : appearance.style === 'armored' ? 31 : 27) * h
+      upperArm: 30 * l * h,
+      forearm: 28 * l * h,
+      hand: 7 * l * h,
+      thigh: 42 * l * h,
+      shin: 40 * l * h,
+      footLength: 15 * l * h,
+      armWidth: (appearance.style === 'classic' ? 10 : appearance.style === 'armored' ? 14 : 12) * l * h,
+      legWidth: (appearance.style === 'classic' ? 13 : appearance.style === 'armored' ? 16 : 14) * l * h,
+      bodyWidth: (appearance.style === 'classic' ? 18 : appearance.style === 'armored' ? 31 : 27) * h
     };
   }
 
