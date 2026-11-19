@@ -428,8 +428,8 @@
       head: 0.018 * Math.sin(t * 0.82 + 0.7),
       leftArm: -0.075 + 0.025 * Math.sin(t * 1.5),
       rightArm: 0.075 - 0.025 * Math.sin(t * 1.5 + 0.4),
-      leftElbow: 0.20 + 0.025 * Math.sin(t * 1.1),
-      rightElbow: 0.21 + 0.025 * Math.sin(t * 1.1 + 0.5),
+      leftElbow: 0.025 + 0.008 * Math.sin(t * 1.1),
+      rightElbow: 0.025 + 0.008 * Math.sin(t * 1.1 + 0.5),
       leftFoot: 0, rightFoot: 0, squat: 0
     };
 
@@ -503,7 +503,8 @@
     const dims = dimensions();
     const pose = getPose();
     const footTargets = getFootTargets(dims);
-    const baseHipY = -(dims.thigh + dims.shin) * 0.955 + state.height + (pose.squat || 0);
+    // در حالت پایه، طول پا تقریباً کاملاً باز است؛ خم‌شدن زانو فقط از هدف پا یا پوز حرکتی ایجاد می‌شود.
+    const baseHipY = -(dims.thigh + dims.shin) - 7 + state.height + (pose.squat || 0);
     const root = { x: state.x, y: baseHipY + (state.onGround ? Math.sin(state.time * 1.7) * 1.1 : 0) };
     let skeleton = StickmanRig.build(root, footTargets, dims, pose, 1);
     let balanceOffset = 0;
