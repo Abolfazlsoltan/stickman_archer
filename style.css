@@ -296,3 +296,26 @@ input[type=color]::-webkit-color-swatch{border:0;border-radius:8px}
   .chips{grid-template-columns:repeat(3,1fr)}
 }
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Mobile usability refinements */
+@media (max-width: 560px){
+  .topbar{gap:6px;padding-inline:8px}
+  .tb-actions{gap:4px}
+  .btn.icon{width:32px;height:32px}
+  .workspace{min-height:0}
+  .stagecol{height:min(48dvh,390px);min-height:230px}
+  .timeline{height:112px;flex:0 0 112px}
+  .tl-head{gap:5px;padding:6px;flex-wrap:nowrap}
+  .tl-head .mini{font-size:10px}
+  .panelnav{padding:7px 8px;gap:5px}
+  .panelnav button{min-height:34px;padding-inline:10px;white-space:nowrap}
+  .panelscroll{padding:10px 9px calc(72px + env(safe-area-inset-bottom))}
+  .su-top{max-width:calc(100% - 16px);gap:5px}
+  .seg button{padding-inline:8px;font-size:10px}
+  .modebadge{font-size:10px;padding-inline:7px}
+  .hint{max-width:calc(100% - 20px);inset-inline-start:10px}
+}
+@media (pointer: coarse){
+  .panelnav button,.btn,.chip,.pbtn,.abtn{min-height:38px}
+  input[type=range]{min-height:28px}
+}
