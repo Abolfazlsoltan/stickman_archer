@@ -1,6 +1,18 @@
 'use strict';
 
 (() => {
+  function reportRuntimeError(error) {
+    const message = String(error && error.message ? error.message : error).slice(0, 180);
+    const toast = document.getElementById('toast');
+    if (toast) {
+      toast.textContent = 'خطای اجرای برنامه: ' + message;
+      toast.classList.add('show');
+    }
+    console.error('[Stickman Studio]', error);
+  }
+  window.addEventListener('error', event => reportRuntimeError(event.error || event.message));
+  window.addEventListener('unhandledrejection', event => reportRuntimeError(event.reason));
+
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -9,7 +21,9 @@
   const RAD = Math.PI / 180;
 
   const canvas = $('#stage');
+  if (!canvas) throw new Error('Canvas #stage پیدا نشد.');
   const ctx = canvas.getContext('2d', { alpha: false });
+  if (!ctx) throw new Error('مرورگر نتوانست Canvas 2D را راه‌اندازی کند.');
   const stageWrap = $('#stageWrap');
   const editor = $('#editorContent');
   const state = StickmanPhysics.createState();
@@ -28,6 +42,7 @@
   let activeTab = 'design';
   let showJoints = false;
   let lastFrame = 0;
+  let lastRenderTimestamp = 0;
   let rafId = 0;
   let stageWidth = 0;
   let stageHeight = 0;
@@ -513,7 +528,8 @@
     const rect = canvas.getBoundingClientRect();
     stageWidth = Math.max(1, rect.width);
     stageHeight = Math.max(1, rect.height);
-    pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    // Keep canvas memory and fill-rate modest on phones.
+    pixelRatio = Math.min(window.devicePixelRatio || 1, window.innerWidth <= 700 ? 1.25 : 1.75);
     canvas.width = Math.round(stageWidth * pixelRatio);
     canvas.height = Math.round(stageHeight * pixelRatio);
     ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
@@ -760,15 +776,23 @@
   }
 
   function frame(timestamp) {
-    if (!lastFrame) lastFrame = timestamp;
-    const dt = clamp((timestamp - lastFrame) / 1000, 0, 1 / 30);
-    lastFrame = timestamp;
-    StickmanPhysics.step(state, dt, motion === 'walk' || motion === 'run' ? motion : 'idle', physicsConfig());
-    if (motion === 'custom' && manualPose.legLift > 0) {
-      // پای راست عمداً بالا نگه داشته می‌شود؛ پای چپ همچنان نقطهٔ اتکاست.
+    try {
+      // Limit mobile rendering to 30 FPS; desktop remains at the display refresh rate.
+      if (window.innerWidth <= 700 && timestamp - lastRenderTimestamp < 1000 / 30) {
+        rafId = requestAnimationFrame(frame);
+        return;
+      }
+      lastRenderTimestamp = timestamp;
+      if (!lastFrame) lastFrame = timestamp;
+      const dt = clamp((timestamp - lastFrame) / 1000, 0, 1 / 30);
+      lastFrame = timestamp;
+      StickmanPhysics.step(state, dt, motion === 'walk' || motion === 'run' ? motion : 'idle', physicsConfig());
+      draw();
+      rafId = requestAnimationFrame(frame);
+    } catch (error) {
+      cancelAnimationFrame(rafId);
+      reportRuntimeError(error);
     }
-    draw();
-    rafId = requestAnimationFrame(frame);
   }
 
   function switchTab(tab) {
