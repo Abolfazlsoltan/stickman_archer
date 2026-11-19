@@ -26,8 +26,9 @@ function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className
 /* ---------------- state ---------------- */
 const DEFAULTS={
   mode:'studio', theme:'battle', ik:true, limits:true, invert:false, snap:true,
-  joints:true, grid:true, vectors:false, ghost:false, props:true, shadow:true, cape:true,
-  helmet:true, outline:true, rim:true, grain:true, parallax:true, follow:true,
+  joints:true, grid:true, vectors:false, ghost:false, props:true, shadow:true, cape:false,
+  helmet:false, plume:false, backpack:false, shoulderPads:false, wristbands:false, gloves:false, boots:false, belt:true,
+  outline:true, rim:true, grain:true, parallax:true, follow:true,
   quality:(innerWidth<900?'med':'high'),
   thickness:15, headSize:1, heightScale:1, zoom:1.25, glow:.5,
   teamColor:'#d93a2b', inkColor:'#151a21', gear:'bare',
@@ -59,11 +60,7 @@ const THEMES={
     ink:'#bfe9ff',bg:'#0a2438',outline:'#bfe9ff',lw:1.5,accent:'#7fe3ff',grid:'rgba(160,225,255,.14)',
     joint:'#ffe08a',eff:'#ff8ac4',rim:'#ffffff',shadow:'rgba(0,0,0,.25)',sun:false,glowMul:.5,tech:true}
 };
-const GEARS={
-  bare:{name:'بدون تجهیز',icon:'✊'}, sword:{name:'شمشیر و سپر',icon:'⚔️'},
-  spear:{name:'نیزه و کلاه‌خود',icon:'🛡️'}, bow:{name:'کمان و ترکش',icon:'🏹'},
-  miner:{name:'کلنگ معدن',icon:'⛏️'}, staff:{name:'عصای جادو',icon:'✨'}, club:{name:'گرز سنگین',icon:'🪓'}
-};
+const GEARS={bare:{name:'بدون لوازم جانبی',icon:'✦'}};
 
 /* ---------------- rig ---------------- */
 const JK=['torso','chest','head','shN','elN','wrN','shF','elF','wrF','hipN','knN','anN','hipF','knF','anF'];
@@ -235,7 +232,7 @@ function physicsStep(dt){
   bag.flash=Math.max(0,bag.flash-dt*3); target.flash=Math.max(0,target.flash-dt*3);
   // cloth (fixed step verlet)
   clothStep(cape,capeAnchor,dt,9*S.heightScale,1);
-  if(S.helmet)clothStep(plume,plumeAnchor,dt,7*S.heightScale,1.5);
+  if(S.helmet&&S.plume)clothStep(plume,plumeAnchor,dt,7*S.heightScale,1.5);
 }
 /* cloth */
 function makeCloth(n){return{pts:[],n};}
@@ -372,19 +369,19 @@ const CLIPS={
     if(!C.fired.dust&&body.onGround&&t>.3){C.fired.dust=1;dust(body.x,body.y,16,1.4);sfx.land(520);}}},
   custom:{hidden:true,dur:1,kind:'state',resp:60,fn:(t,T)=>{if(customPose)Object.assign(T,customPose);T.custom=true;}}
 };
-const CLIP_ORDER=['idle','guard','walk','run','jump','wave','kick','sword','spear','bow','mine','cast','victory','fall'];
+const CLIP_ORDER=['idle','guard','walk','run','jump','wave','victory','fall'];
+const SAFE_CLIPS=new Set(CLIP_ORDER);
 const POSES={
   std:{label:'استاندارد',icon:'🧍',make:()=>basePose()},
   guard:{label:'گارد رزمی',icon:'🛡️',make:()=>Object.assign(basePose(),{hipH:standH()*.86,torso:.18,chest:-.07,head:-.08,shN:.55,elN:1.45,wrN:-.15,shF:.78,elF:1.65,hipN:.3,knN:.35,hipF:-.25,knF:.4})},
   tpose:{label:'T-Pose',icon:'✝️',make:()=>Object.assign(basePose(),{torso:0,chest:0,head:0,shN:PI/2,elN:.02,shF:PI/2,elF:.02,hipN:.02,knN:.02,hipF:-.02,knF:.02,hipH:standH()*.99})},
-  throw:{label:'پرتاب',icon:'🎯',make:()=>Object.assign(basePose(),{torso:-.16,chest:.1,head:.1,shN:2.9,elN:1.1,wrN:-.4,shF:1.3,elF:.5,hipN:.55,knN:.3,hipF:-.4,knF:.5,rootDX:-4,hipH:standH()*.9})},
   sit:{label:'نشسته',icon:'🧘',make:()=>Object.assign(basePose(),{hipH:26*S.heightScale,torso:.12,head:.05,shN:.35,elN:.85,shF:.3,elF:.9,hipN:1.5,knN:2.3,anN:.3,hipF:1.35,knF:2.4,anF:.25})},
   cheer:{label:'سلام بلند',icon:'🙌',make:()=>Object.assign(basePose(),{shN:2.6,elN:.3,shF:2.5,elF:.35,torso:-.08,head:-.14,hipH:standH()*.98})}
 };
 
 /* ---------------- clip manager ---------------- */
 function setClip(name,opt={}){
-  if(!CLIPS[name])return;
+  if(!CLIPS[name]||!SAFE_CLIPS.has(name))return;
   if(name==='jump'&&S.mode==='field'){body.jumpBuf=.14;doJump();return;}
   if(CLIPS[name].gear&&S.gear!==CLIPS[name].gear)set('gear',CLIPS[name].gear);
   if(name!=='custom')customPose=null;
@@ -553,6 +550,12 @@ function charShapes(J,p){
   const push=(d,fill,lw2,stk,alpha=1,gl=0)=>out.push({d,fill,stroke:stk===undefined?stroke:stk,lw:lw2===undefined?lw:lw2,alpha,glow:gl});
   const fill=x=>tech?rgba('#bfe9ff',.07):x;
   const dir=body.facing;
+  // Backpack: behind the torso so the main rig remains readable.
+  if(S.backpack){
+    const a=ang(J.pelvis,J.chest),f=frame(J.chest,a,dir);
+    push(poly([f(-th*.78,-4),f(-th*1.42,-1),f(-th*1.38,22),f(-th*.72,26)]),fill(shade(S.teamColor,-.22)),lw,'#303b49');
+    push(poly([f(-th*1.34,4),f(-th*1.48,8),f(-th*1.44,18),f(-th*1.28,20)]),fill('#7d8998'),.8,'#303b49');
+  }
   // cape
   if(S.cape&&cape.pts.length>2){
     const pts=cape.pts,left=[],right=[];
@@ -582,8 +585,8 @@ function charShapes(J,p){
   push(cap(J.pelvis.x,J.pelvis.y,J.chest.x,J.chest.y,th*.6,th*.62),fill(near));
   push(cap(J.chest.x,J.chest.y,J.neck.x,J.neck.y,th*.5,th*.34),fill(near));
   push(circ(J.head.x,J.head.y,J.headR),fill(near));
-  // sash
-  {const a=ang(J.pelvis,J.chest),f=frame(J.pelvis,a,dir);
+  // belt / sash
+  if(S.belt){const a=ang(J.pelvis,J.chest),f=frame(J.pelvis,a,dir);
    push(poly([f(-th*.62,-3),f(th*.62,-3),f(th*.6,4),f(-th*.6,4)]),fill(S.teamColor),0,null);
    push(poly([f(-th*.5,3),f(-th*.1,3),f(-th*.2,16),f(-th*.62,14)]),fill(shade(S.teamColor,-.2)),0,null,.9);}
   // rim light
@@ -593,6 +596,11 @@ function charShapes(J,p){
     push(circ(J.head.x-J.headR*.3,J.head.y-J.headR*.32,J.headR*.4),thm.rim,0,null,.16);
     push(cap(J.hipJN.x+o,J.hipJN.y+oy,J.kneeN.x+o,J.kneeN.y+oy,th*.16,th*.14),thm.rim,0,null,.16);
   }
+  // Optional shoulder pads.
+  if(S.shoulderPads){
+    push(circ(J.shoulderF.x,J.shoulderF.y,th*.62),fill('#8995a5'),1,'#344253');
+    push(circ(J.shoulderN.x,J.shoulderN.y,th*.66),fill('#aab4c2'),1,'#344253');
+  }
   // near limbs
   push(cap(J.hipJN.x,J.hipJN.y,J.kneeN.x,J.kneeN.y,th*.54,th*.44),fill(near));
   push(cap(J.kneeN.x,J.kneeN.y,J.ankleN.x,J.ankleN.y,th*.44,th*.34),fill(near));
@@ -600,13 +608,25 @@ function charShapes(J,p){
   push(cap(J.shoulderN.x,J.shoulderN.y,J.elbowN.x,J.elbowN.y,th*.44,th*.38),fill(near));
   push(cap(J.elbowN.x,J.elbowN.y,J.handN.x,J.handN.y,th*.38,th*.32),fill(near));
   push(circ(J.handN.x,J.handN.y,th*.35),fill(near));
+  if(S.wristbands){
+    push(cap(J.elbowF.x,J.elbowF.y,J.handF.x,J.handF.y,th*.39,th*.35),fill('#b7a27c'),0,'#6f5b3e');
+    push(cap(J.elbowN.x,J.elbowN.y,J.handN.x,J.handN.y,th*.41,th*.37),fill('#d1b98b'),0,'#6f5b3e');
+  }
+  if(S.gloves){
+    push(circ(J.handF.x,J.handF.y,th*.46),fill(shade(S.teamColor,-.12)),.8,'#303b49');
+    push(circ(J.handN.x,J.handN.y,th*.48),fill(S.teamColor),.8,'#303b49');
+  }
+  if(S.boots){
+    push(cap(J.ankleF.x,J.ankleF.y,J.toeF.x,J.toeF.y,th*.43,th*.38),fill('#66513d'),1,'#2d2926');
+    push(cap(J.ankleN.x,J.ankleN.y,J.toeN.x,J.toeN.y,th*.46,th*.4),fill('#806548'),1,'#2d2926');
+  }
   // helmet
   if(S.helmet){
     const r=J.headR*1.06,cx=J.head.x,cy=J.head.y;
     push(`M${f2(cx-r)},${f2(cy-r*.1)}A${f2(r)},${f2(r)} 0 0 1 ${f2(cx+r)},${f2(cy-r*.1)}L${f2(cx+r*.92)},${f2(cy+r*.34)}L${f2(cx+r*.5)},${f2(cy+r*.2)}L${f2(cx-r*.55)},${f2(cy+r*.24)}L${f2(cx-r*.95)},${f2(cy+r*.4)}Z`,
       fill('#8c93a3'),lw,'#3c4351');
     push(poly([[cx+dir*r*.42,cy-r*.1],[cx+dir*r*.72,cy-r*.1],[cx+dir*r*.66,cy+r*.62],[cx+dir*r*.44,cy+r*.5]]),fill('#767d8d'),0,null);
-    if(S.helmet&&plume.pts.length>2){
+    if(S.helmet&&S.plume&&plume.pts.length>2){
       const pts=plume.pts,l=[],r2=[];
       for(let i=0;i<pts.length;i++){const w=(6-i*1.2)*S.heightScale;
         l.push([pts[i].x,pts[i].y-w]);r2.push([pts[i].x,pts[i].y+w]);}
@@ -1385,6 +1405,7 @@ function loadProject(file){
       const d=JSON.parse(rd.result);
       if(!d||!d.S)throw new Error('bad');
       Object.keys(DEFAULTS).forEach(k=>{if(k in d.S)S[k]=d.S[k];});
+      S.gear='bare';if(!SAFE_CLIPS.has(S.clip))S.clip='idle';
       frames=(d.frames||[]).map((f,i)=>({id:'p'+Date.now()+i,pose:f.pose,dur:f.dur||.5,thumb:thumb(f.pose)}));
       tl.playing=false;customPose=null;
       refreshAll();renderFrames();setClip(CLIPS[S.clip]?S.clip:'idle',{silent:true});
@@ -1405,7 +1426,7 @@ function restore(){
   try{
     const raw=localStorage.getItem('stickman-studio-v3');if(!raw)return;
     const d=JSON.parse(raw);
-    if(d&&d.S)Object.keys(DEFAULTS).forEach(k=>{if(k in d.S)S[k]=d.S[k];});
+    if(d&&d.S){Object.keys(DEFAULTS).forEach(k=>{if(k in d.S)S[k]=d.S[k];});S.gear='bare';if(!SAFE_CLIPS.has(S.clip))S.clip='idle';}
     if(d&&Array.isArray(d.frames))
       frames=d.frames.filter(f=>f&&f.pose).map((f,i)=>({id:'r'+i,pose:f.pose,dur:f.dur||.5,thumb:thumb(f.pose)}));
   }catch(e){}
@@ -1645,21 +1666,18 @@ function buildPanel(){
 
   /* ---------- تجهیزات: پنل مستقل و جدا از ابزارهای ساخت کاراکتر ---------- */
   const eq=$('#sec_equipment');
-  const gc=el('div','chips');
-  Object.keys(GEARS).forEach(k=>{
-    const b=el('button','chip gearbtn',`<span class="em">${GEARS[k].icon}</span><span>${GEARS[k].name}</span>`);
-    b.type='button';b.dataset.gear=k;
-    b.addEventListener('click',()=>{set('gear',k);sfx.ui();});
-    gc.appendChild(b);
-  });
-  eq.appendChild(card(label('انتخاب تجهیزات ظاهری'),gc,
-    el('div','note','این بخش مستقل است؛ در صفحهٔ اصلی می‌توانی روی پوز، مفاصل و انیمیشن خود کاراکتر تمرکز کنی. تجهیزات از این پنل به‌صورت لایهٔ بصری انتخاب می‌شوند.'),
-    row(btn('✊ حذف تجهیزات از کاراکتر','sm',()=>set('gear','bare')))
-  ));
   eq.appendChild(card(
-    ctrlToggle({key:'cape',label:'شنل کاراکتر'}),
-    ctrlToggle({key:'helmet',label:'کلاه‌خود و پرِ رنگی'}),
-    el('div','note','برای افزودن تجهیزات تازه در نسخه‌های بعدی، گزینه‌های جدید را می‌توان به همین پنل اضافه کرد؛ بدون شلوغ کردن فضای اصلی کار.' )
+    label('لوازم ظاهری کاراکتر'),
+    ctrlToggle({key:'cape',label:'شنل پارچه‌ای با فیزیک حرکت'}),
+    ctrlToggle({key:'helmet',label:'کلاه‌خود'}),
+    ctrlToggle({key:'plume',label:'پرِ تزئینی کلاه‌خود'}),
+    ctrlToggle({key:'backpack',label:'کوله‌پشتی'}),
+    ctrlToggle({key:'shoulderPads',label:'محافظ شانه'}),
+    ctrlToggle({key:'wristbands',label:'مچ‌بند'}),
+    ctrlToggle({key:'gloves',label:'دستکش'}),
+    ctrlToggle({key:'boots',label:'چکمه'}),
+    ctrlToggle({key:'belt',label:'کمربند و نوار تزئینی'}),
+    el('div','note','این بخش مستقل از صفحهٔ اصلی است. هر قطعه را جداگانه روشن یا خاموش کن؛ محیط اصلی برای ریگ، مفاصل و ساخت پوز خلوت می‌ماند.')
   ));
 
   /* ---------- صحنه ---------- */
@@ -1776,7 +1794,7 @@ function syncMode(){
   $('#app').classList.toggle('field',field);
   $$('#segMode button').forEach(b=>b.classList.toggle('on',b.dataset.mode===S.mode));
   $('#hintTxt').innerHTML=field
-    ? 'با <b>◀ ▶</b> نیرو وارد کن؛ <b>Space</b> پرش و <b>E</b> حمله. جنس زمین را عوض کن و لیز خوردن را ببین.'
+    ? 'با <b>◀ ▶</b> حرکت کن و با <b>Space</b> بپر؛ جنس زمین و اثر اصطکاک را بررسی کن.'
     : 'مفاصل <b>بنفش</b> را بکش تا با IK پوز بسازی؛ کشیدن افقی روی صحنه، زمان حرکت را جلو و عقب می‌برد.';
   $('#hint').hidden=false;
   canvas.style.cursor=field?'grab':'crosshair';
@@ -1810,10 +1828,10 @@ function helpModal(){
   const host=$('#modalHost');
   host.innerHTML=`<div class="modal"><div class="box">
     <h3>استودیو استیکمن — Legacy Rig v2</h3>
-    <p>کاراکتری استخوان‌بندی‌شده به سبک <b>Stick War Legacy</b>: بدن مرکبی ضخیم با سر گرد، تجهیزات رزمی، شنلِ دارای فیزیک پارچه و سایهٔ تماس با زمین.</p>
+    <p>کاراکتری استخوان‌بندی‌شده با ریگ کامل، لوازم ظاهری مستقل، شنل پارچه‌ای و سایهٔ تماس با زمین.</p>
     <ul>
-      <li><b>استودیو:</b> پوزسازی IK/FK، چهارده حرکت آماده، تایم‌لاین کلیدفریمی با جابه‌جایی فریم‌ها و خروجی SVG/PNG.</li>
-      <li><b>میدان فیزیک:</b> حرکت با نیروی واقعی محدود به اصطکاک μ·N، گرانش، پرش، فرود، باد، سکو، کیسه‌شن و سیبل تیراندازی.</li>
+      <li><b>استودیو:</b> پوزسازی IK/FK، حرکت‌های آماده، تایم‌لاین کلیدفریمی با جابه‌جایی فریم‌ها و خروجی SVG/PNG.</li>
+      <li><b>میدان فیزیک:</b> حرکت، گرانش، پرش، فرود، باد، اصطکاک و برخورد با محیط.</li>
       <li><b>گام‌برداری:</b> پا روی زمین قفل می‌شود و با IK حل می‌شود؛ بنابراین پا نمی‌سُرد و لگن از روی هندسهٔ واقعیِ پاها بالا و پایین می‌رود.</li>
       <li><b>طبیعی‌سازی:</b> خم‌شدن بدن با شتاب، تثبیت سر، اسکواش و استرچ فرود، نوسان ثانویهٔ شنل و پرِ کلاه.</li>
     </ul>
@@ -1951,11 +1969,6 @@ function holdBtn(sel,fn){
     b.addEventListener(ev,()=>b.classList.remove('held')));
 }
 holdBtn('#btnJump',()=>{body.jumpBuf=.14;doJump();});
-holdBtn('#btnAtk',()=>attack());
-function attack(){
-  const map={sword:'sword',spear:'spear',bow:'bow',miner:'mine',staff:'cast',club:'sword',bare:'kick'};
-  setClip(map[S.gear]||'kick');
-}
 addEventListener('keydown',e=>{
   const t=e.target.tagName;
   if(t==='INPUT'||t==='SELECT'||t==='TEXTAREA')return;
@@ -1965,8 +1978,6 @@ addEventListener('keydown',e=>{
   if(k==='arrowleft'||k==='a'){if(S.mode==='field')keys.left=true;else nudgeJoint(-2);}
   else if(k==='arrowright'||k==='d'){if(S.mode==='field')keys.right=true;else nudgeJoint(2);}
   else if(k===' '){if(S.mode==='field'){body.jumpBuf=.14;doJump();}else setClip('jump');}
-  else if(k==='e')attack();
-  else if(k==='k')setClip('kick');
   else if(k==='g')set('grid',!S.grid);
   else if(k==='j')set('joints',!S.joints);
   else if(k==='v')set('vectors',!S.vectors);
