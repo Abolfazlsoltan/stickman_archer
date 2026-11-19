@@ -1,126 +1,69 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b1016">
-<title>استودیو استیکمن — ریگ استخوانی، انیمیشن و فیزیک</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a101a">
+  <title>Stickman Studio — Character Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="app" id="app">
-  <header class="topbar">
-    <div class="brand">
-      <div class="logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#2a1704" stroke-width="2.1" stroke-linecap="round">
-          <circle cx="12" cy="4.6" r="2.6" fill="#2a1704" stroke="none"/>
-          <path d="M12 7.4v7"/><path d="M12 9.2 7.4 12M12 9.2 16.8 11.4"/><path d="M12 14.4 8.4 21M12 14.4 15.8 21"/>
-        </svg>
-      </div>
-      <div>
+  <main class="app" id="app">
+    <header class="topbar">
+      <div class="brandmark" aria-hidden="true">S</div>
+      <div class="brandcopy">
         <h1>استودیو استیکمن</h1>
-        <div class="sub"><span class="tag">LEGACY RIG v2</span><span>ریگ استخوانی · انیمیشن · شخصی‌سازی کاراکتر</span></div>
+        <p>Character Lab <span>نسخهٔ بازطراحی‌شده</span></p>
       </div>
+      <div class="top-actions">
+        <button class="topbtn" id="exportSvg" type="button" title="خروجی برداری">خروجی SVG</button>
+        <button class="topbtn" id="savePng" type="button" title="ذخیرهٔ تصویر">PNG</button>
+        <button class="topbtn quiet" id="fullscreen" type="button" title="تمام‌صفحه">تمام‌صفحه</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <section class="stage-panel">
+        <div class="stage-head">
+          <div>
+            <strong>پیش‌نمایش زنده</strong>
+            <span id="motionLabel">ایستادن طبیعی</span>
+          </div>
+          <div class="stage-status"><i id="statusDot"></i><span id="statusText">تعادل برقرار است</span></div>
+        </div>
+        <div class="stage-wrap" id="stageWrap">
+          <canvas id="stage" aria-label="پیش‌نمایش آدمک"></canvas>
+          <div class="stage-tools">
+            <button id="toggleJoints" class="stage-tool" type="button" aria-pressed="false">نمایش مفاصل</button>
+            <button id="jump" class="stage-tool accent" type="button">پرش</button>
+          </div>
+          <div class="stage-tip">حرکت‌ها را از بخش «حرکت» انتخاب کن؛ تغییرات ظاهر و مفاصل فوراً اعمال می‌شوند.</div>
+        </div>
+        <div class="stage-footer">
+          <span>تماس پا با زمین: <b>فعال</b></span>
+          <span>حل مفاصل: <b>IK دو‌بخشی</b></span>
+          <span>تعادل بدن: <b id="balanceState">فعال</b></span>
+        </div>
+      </section>
+
+      <aside class="editor-panel">
+        <nav class="tabs" aria-label="بخش‌های ویرایش">
+          <button class="tab active" data-tab="design" type="button"><span>◈</span> ظاهر</button>
+          <button class="tab" data-tab="pose" type="button"><span>⌘</span> مفاصل</button>
+          <button class="tab" data-tab="motion" type="button"><span>▶</span> حرکت</button>
+          <button class="tab" data-tab="physics" type="button"><span>◎</span> فیزیک</button>
+        </nav>
+        <div class="editor-scroll" id="editorContent"></div>
+      </aside>
     </div>
-    <div class="grow"></div>
-    <div class="tb-actions">
-      <button class="btn icon" id="btnSound" title="صدا" aria-label="صدا">🔊</button>
-      <button class="btn blue" id="btnSvg" title="خروجی برداری SVG">⬇<span class="lbl">SVG</span></button>
-      <button class="btn primary" id="btnPng" title="ذخیره تصویر PNG">🖼<span class="lbl">PNG</span></button>
-      <button class="btn icon" id="btnMax" title="تمام‌صفحه کردن صحنه" aria-label="تمام‌صفحه">⛶</button>
-      <button class="btn icon" id="btnHelp" title="راهنما" aria-label="راهنما">؟</button>
-    </div>
-  </header>
+  </main>
 
-  <div class="workspace">
-    <section class="stagecol">
-      <div class="stagewrap" id="stagewrap">
-        <canvas id="stage"></canvas>
-        <div class="stageui">
-          <div class="su-top">
-            <div class="seg" id="segMode" role="tablist" aria-label="حالت اجرا">
-              <button data-mode="studio" role="tab">🎬 استودیو</button>
-              <button data-mode="field" role="tab">🌍 میدان فیزیک</button>
-            </div>
-            <div class="seg" id="segIk" aria-label="حالت ریگ">
-              <button data-ik="1">هوشمند IK</button>
-              <button data-ik="0">پایه FK</button>
-            </div>
-            <div class="modebadge" id="badgeClip">حرکت: <b>ایستاده</b></div>
-          </div>
-
-          <div class="hud" id="hud">
-            <div class="hh"><b>تِلِمتری فیزیک</b><span class="pill ground" id="hState">زمین</span></div>
-            <div class="row"><span>سرعت</span><span id="hSpd">0.00 m/s</span></div>
-            <div class="bar"><i id="hBar"></i></div>
-            <div class="row"><span>vx</span><span id="hVx">0</span></div>
-            <div class="row"><span>vy</span><span id="hVy">0</span></div>
-            <div class="row opt"><span>ارتفاع</span><span id="hH">0.00 m</span></div>
-            <div class="row"><span>نیروی افقی</span><span id="hF">0 N</span></div>
-            <div class="row opt"><span>اصطکاک</span><span id="hFr">0 N</span></div>
-            <div class="row opt"><span>سطح / FPS</span><span id="hFps">سنگ · 60</span></div>
-          </div>
-
-          <div class="cambtns">
-            <button class="btn icon" id="btnZin" title="بزرگ‌نمایی" aria-label="بزرگ‌نمایی">＋</button>
-            <button class="btn icon" id="btnZout" title="کوچک‌نمایی" aria-label="کوچک‌نمایی">－</button>
-            <button class="btn icon" id="btnCenter" title="بازگرداندن دوربین" aria-label="بازگرداندن دوربین">⌖</button>
-          </div>
-
-          <div class="pad" id="pad">
-            <button class="pbtn" data-axis="-1" aria-label="چپ">◀</button>
-            <button class="pbtn" data-axis="1" aria-label="راست">▶</button>
-          </div>
-          <div class="acts">
-            <button class="abtn jump" id="btnJump" aria-label="پرش"><small>⤒</small>پرش</button>
-          </div>
-
-          <div class="hint" id="hint">
-            <span id="hintTxt">مفاصل <b>بنفش</b> را بکش تا با IK پوز بسازی؛ مفاصل آبی چرخشی‌اند.</span>
-            <button id="hintX" aria-label="بستن">✕</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="timeline">
-        <div class="tl-head">
-          <button class="btn sm" id="tlPlay">▶ پخش انیمیشن</button>
-          <button class="btn sm primary" id="tlAdd">＋ ثبت فریم</button>
-          <button class="btn sm" id="tlClear">پاک کردن</button>
-          <div class="tl-title">فریم‌ها <b id="tlCount">۰</b></div>
-          <label class="mini"><input type="checkbox" id="tlLoop" checked> تکرار</label>
-          <div class="mini">سرعت<input type="range" id="tlSpeed" min="0.1" max="3" step="0.05" value="1"><span id="tlSpeedV">1.0x</span></div>
-          <div class="mini">میان‌یابی
-            <select id="tlEase">
-              <option value="smooth">نرم</option>
-              <option value="linear">خطی</option>
-              <option value="ease">شتاب‌دار</option>
-              <option value="spring">فنری</option>
-              <option value="hold">پله‌ای</option>
-            </select>
-          </div>
-          <label class="mini"><input type="checkbox" id="tlGhost"> شبح</label>
-        </div>
-        <div class="tl-strip" id="tlStrip">
-          <div class="playhead" id="playhead"></div>
-        </div>
-      </div>
-    </section>
-
-    <aside class="panel">
-      <nav class="panelnav" id="panelnav"></nav>
-      <div class="panelscroll" id="panelscroll"></div>
-    </aside>
-  </div>
-</div>
-
-<div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span><button class="btn sm" id="toastAct" hidden>بازگردانی</button></div>
-<div id="modalHost"></div>
-<noscript><p style="padding:20px">برای اجرای استودیو، جاوااسکریپت را فعال کنید.</p></noscript>
-
-<script src="app.js" defer></script>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="physics.js" defer></script>
+  <script src="rig.js" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>
