@@ -46,7 +46,7 @@
       const sign = which === 'left' ? -1 : 1;
       const shoulder = shoulders[which];
       const armAngle = p[which + 'Arm'] == null ? sign * 0.08 : p[which + 'Arm'];
-      const elbowBend = p[which + 'Elbow'] == null ? 0.22 : p[which + 'Elbow'];
+      const elbowBend = p[which + 'Elbow'] == null ? 0.025 : p[which + 'Elbow'];
       const elbow = add(shoulder, fromDown(armAngle, dims.upperArm, 1));
       const foreAngle = armAngle + sign * elbowBend;
       const wrist = add(elbow, fromDown(foreAngle, dims.forearm, 1));
