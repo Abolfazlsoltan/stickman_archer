@@ -23,8 +23,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate JavaScript syntax
-        run: node --check app.js
+      - name: Validate JavaScript and rig physics
+        run: |
+          node --check app.js
+          node --check physics.js
+          node --check rig.js
+          node tests/rig.test.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site artifact
