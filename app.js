@@ -29,12 +29,12 @@
   const state = StickmanPhysics.createState();
 
   const appearance = {
-    style: 'classic', body: '#151a21', accent: '#d93a2b', skin: '#151a21', hair: '#151a21',
+    style: 'classic', body: '#2a2d35', accent: '#c4a35a', skin: '#2a2d35', hair: '#2a2d35',
     height: 1, head: 1, shoulders: 1, limbs: 1
   };
   const manualPose = {
     torso: 0, head: 0, leftArm: -0.08, rightArm: 0.08,
-    leftElbow: 0.24, rightElbow: 0.24, legLift: 0
+    leftElbow: 0, rightElbow: 0, legLift: 0
   };
   const physics = { gravity: 980, jumpImpulse: 520, balanceAssist: true };
   let motion = 'idle';
@@ -208,7 +208,7 @@
     const row = document.createElement('div');
     row.className = 'action-row';
     addAction(row, 'بازنشانی ظاهر', () => {
-      Object.assign(appearance, { style: 'classic', body: '#151a21', accent: '#d93a2b', skin: '#151a21', hair: '#151a21', height: 1, head: 1, shoulders: 1, limbs: 1 });
+      Object.assign(appearance, { style: 'classic', body: '#2a2d35', accent: '#c4a35a', skin: '#2a2d35', hair: '#2a2d35', height: 1, head: 1, shoulders: 1, limbs: 1 });
       renderPanel('design');
       showToast('ظاهر به حالت پیش‌فرض برگشت.');
     }, false);
@@ -223,7 +223,7 @@
   }
 
   function applyPosePreset(name) {
-    Object.assign(manualPose, { torso: 0, head: 0, leftArm: -0.08, rightArm: 0.08, leftElbow: 0.24, rightElbow: 0.24, legLift: 0 });
+    Object.assign(manualPose, { torso: 0, head: 0, leftArm: -0.08, rightArm: 0.08, leftElbow: 0, rightElbow: 0, legLift: 0 });
     if (name === 'guard') Object.assign(manualPose, { torso: 0.14, head: -0.06, leftArm: 1.2, rightArm: 1.65, leftElbow: 0.8, rightElbow: 0.9 });
     if (name === 'tpose') Object.assign(manualPose, { leftArm: -Math.PI / 2, rightArm: Math.PI / 2, leftElbow: 0, rightElbow: 0 });
     if (name === 'balance') Object.assign(manualPose, { torso: -0.05, leftArm: -1.05, rightArm: 1.05, legLift: 42 });
@@ -404,10 +404,10 @@
     return {
       // تناسبات نزدیک به ریگ کلاسیک قبلی
       spine: 46 * h,
-      neck: 11 * h,
+      neck: 5 * h,
       headOffset: 15 * h,
-      headRadius: 14.6 * appearance.head * h,
-      shoulderWidth: 30 * appearance.shoulders * h,
+      headRadius: 18 * appearance.head * h,
+      shoulderWidth: 38 * appearance.shoulders * h,
       hipWidth: 20 * l * h,
       upperArm: 30 * l * h,
       forearm: 28 * l * h,
@@ -415,9 +415,9 @@
       thigh: 42 * l * h,
       shin: 40 * l * h,
       footLength: 15 * l * h,
-      armWidth: (appearance.style === 'classic' ? 10 : appearance.style === 'armored' ? 14 : 12) * l * h,
-      legWidth: (appearance.style === 'classic' ? 13 : appearance.style === 'armored' ? 16 : 14) * l * h,
-      bodyWidth: (appearance.style === 'classic' ? 18 : appearance.style === 'armored' ? 31 : 27) * h
+      armWidth: (appearance.style === 'classic' ? 13 : appearance.style === 'armored' ? 18 : 16) * l * h,
+      legWidth: (appearance.style === 'classic' ? 17 : appearance.style === 'armored' ? 20 : 18) * l * h,
+      bodyWidth: (appearance.style === 'classic' ? 24 : appearance.style === 'armored' ? 34 : 30) * h
     };
   }
 
@@ -428,8 +428,8 @@
       head: 0.018 * Math.sin(t * 0.82 + 0.7),
       leftArm: -0.075 + 0.025 * Math.sin(t * 1.5),
       rightArm: 0.075 - 0.025 * Math.sin(t * 1.5 + 0.4),
-      leftElbow: 0.025 + 0.008 * Math.sin(t * 1.1),
-      rightElbow: 0.025 + 0.008 * Math.sin(t * 1.1 + 0.5),
+      leftElbow: 0,
+      rightElbow: 0,
       leftFoot: 0, rightFoot: 0, squat: 0
     };
 
@@ -489,7 +489,7 @@
   }
 
   function getFootTargets(dims) {
-    const ankleLift = -7;
+    const ankleLift = -2;
     const targets = state.feet.map(f => ({ x: f.x, y: state.onGround ? ankleLift + f.y : f.y }));
     if (motion === 'balance') {
       targets[1] = { x: state.x + 38, y: -43 };
@@ -629,6 +629,22 @@
       ctx.strokeStyle = appearance.accent; ctx.lineWidth = 2.2 * scale;
       ctx.beginPath(); ctx.moveTo(H.x + 2 * scale, H.y + 4 * scale); ctx.lineTo(T.x - 2 * scale, T.y + 4 * scale); ctx.stroke();
     }
+    // کفش کوتاه و مجزا از ساق
+    const dx = T.x - H.x, dy = T.y - H.y;
+    const length = Math.hypot(dx, dy) || 1;
+    const nx = -dy / length, ny = dx / length;
+    const shoeDepth = 5.5 * scale;
+    ctx.fillStyle = '#11151b';
+    ctx.strokeStyle = 'rgba(210,214,220,.38)';
+    ctx.lineWidth = 1 * scale;
+    ctx.beginPath();
+    ctx.moveTo(H.x - nx * shoeDepth, H.y - ny * shoeDepth);
+    ctx.lineTo(T.x + nx * shoeDepth * 0.55, T.y + ny * shoeDepth * 0.55);
+    ctx.lineTo(T.x + nx * shoeDepth, T.y + ny * shoeDepth);
+    ctx.lineTo(H.x + nx * shoeDepth, H.y + ny * shoeDepth);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
   }
 
   function drawCharacter(data) {
@@ -649,14 +665,16 @@
 
     // پای دور و دست دور ابتدا رسم می‌شوند.
     const backLeg = sk.legs.left;
-    drawBone(backLeg.hip, backLeg.knee, legWidth, shadeColor(bodyColor, -0.18));
-    drawBone(backLeg.knee, backLeg.ankle, legWidth * 0.82, shadeColor(bodyColor, -0.12));
+    drawBone(backLeg.hip, backLeg.knee, legWidth, shadeColor(bodyColor, -0.35));
+    drawBone(backLeg.knee, backLeg.ankle, legWidth * 0.82, shadeColor(bodyColor, -0.35));
     drawFoot(backLeg, dims);
     const backArm = sk.arms.left;
-    drawBone(backArm.shoulder, backArm.elbow, armWidth * 0.9, shadeColor(bodyColor, -0.12));
-    drawBone(backArm.elbow, backArm.wrist, armWidth * 0.78, shadeColor(bodyColor, -0.1));
+    drawBone(backArm.shoulder, backArm.elbow, armWidth * 0.9, shadeColor(bodyColor, -0.35));
+    drawBone(backArm.elbow, backArm.wrist, armWidth * 0.78, shadeColor(bodyColor, -0.35));
     drawJoint(backArm.hand, armWidth * 0.37, appearance.style === 'classic' ? bodyColor : skin);
 
+    // پهنای شانه و تنهٔ عضلانی
+    drawBone(sk.shoulders.left, sk.shoulders.right, dims.bodyWidth * 0.78, shadeColor(bodyColor, 0.08), true);
     // تنه و لباس
     drawBone(sk.pelvis, sk.chest, dims.bodyWidth, bodyColor, true);
     drawBone(sk.chest, sk.neck, Math.max(8, dims.bodyWidth * 0.35), appearance.style === 'classic' ? bodyColor : skin, false);
@@ -670,36 +688,55 @@
       ctx.beginPath(); ctx.arc(pelvis.x, pelvis.y, 4.1 * scale, 0, TAU); ctx.fill();
     }
 
-    // سر: حالت کلاسیک، فرم ساده و یک‌دست نسخهٔ قبلی را حفظ می‌کند.
+    // سر جنگجوی سنگی: فرم بیضی عمودی، سایه‌روشن عمیق و چهرهٔ جدی.
     const head = screen(sk.head);
     const radius = dims.headRadius * scale;
-    if (appearance.style === 'classic') {
-      ctx.fillStyle = 'rgba(3,8,14,.74)';
-      ctx.beginPath(); ctx.arc(head.x, head.y, radius + 2.5 * scale, 0, TAU); ctx.fill();
-      ctx.fillStyle = bodyColor;
-      ctx.beginPath(); ctx.arc(head.x, head.y, radius, 0, TAU); ctx.fill();
-    } else {
-      const head = screen(sk.head);
-      const radius = dims.headRadius * scale;
-      const skinGrad = ctx.createRadialGradient(head.x - radius * 0.35, head.y - radius * 0.42, 1, head.x, head.y, radius * 1.25);
-      skinGrad.addColorStop(0, shadeColor(skin, 0.17));
-      skinGrad.addColorStop(1, shadeColor(skin, -0.1));
-      ctx.fillStyle = 'rgba(3,8,14,.74)'; ctx.beginPath(); ctx.arc(head.x, head.y, radius + 2.5 * scale, 0, TAU); ctx.fill();
-      ctx.fillStyle = skinGrad; ctx.beginPath(); ctx.arc(head.x, head.y, radius, 0, TAU); ctx.fill();
-      ctx.fillStyle = appearance.hair;
-      ctx.beginPath();
-      ctx.arc(head.x - 1.4 * scale, head.y - 2 * scale, radius * 1.02, Math.PI * 1.06, Math.PI * 2.05);
-      ctx.quadraticCurveTo(head.x + radius * 0.32, head.y - radius * 0.5, head.x + radius * 0.8, head.y - radius * 0.18);
-      ctx.quadraticCurveTo(head.x + radius * 0.12, head.y - radius * 0.66, head.x - radius, head.y - radius * 0.38);
-      ctx.fill();
-      const eyeX = head.x + 6.5 * scale;
-      const eyeY = head.y - 1.5 * scale;
-      ctx.fillStyle = '#2b2630'; ctx.beginPath(); ctx.arc(eyeX, eyeY, 1.7 * scale, 0, TAU); ctx.fill();
-      ctx.strokeStyle = 'rgba(88,48,42,.65)'; ctx.lineWidth = 1.2 * scale;
-      ctx.beginPath(); ctx.moveTo(head.x + 7 * scale, head.y + 5 * scale); ctx.lineTo(head.x + 11 * scale, head.y + 4 * scale); ctx.stroke();
-  
-  
-    }
+    const headRx = radius * 0.82;
+    const headRy = radius * 1.12;
+    const headGrad = ctx.createRadialGradient(
+      head.x - headRx * 0.34, head.y - headRy * 0.42, 1,
+      head.x, head.y, radius * 1.35
+    );
+    headGrad.addColorStop(0, shadeColor(skin, 0.22));
+    headGrad.addColorStop(0.48, skin);
+    headGrad.addColorStop(1, shadeColor(skin, -0.35));
+    ctx.fillStyle = 'rgba(3,8,14,.88)';
+    ctx.beginPath();
+    ctx.ellipse(head.x, head.y, headRx + 2.5 * scale, headRy + 2.5 * scale, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = headGrad;
+    ctx.beginPath();
+    ctx.ellipse(head.x, head.y, headRx, headRy, 0, 0, TAU);
+    ctx.fill();
+
+    // چشم‌های سفید بیضی و ابروهای زاویه‌دار رو به مرکز.
+    const eyeY = head.y - 2.5 * scale;
+    const eyeOffset = 6.2 * scale;
+    ctx.fillStyle = '#f4f3ec';
+    ctx.beginPath();
+    ctx.ellipse(head.x - eyeOffset, eyeY, 2.8 * scale, 3.9 * scale, -0.12, 0, TAU);
+    ctx.ellipse(head.x + eyeOffset, eyeY, 2.8 * scale, 3.9 * scale, 0.12, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#11151b';
+    ctx.beginPath();
+    ctx.ellipse(head.x - eyeOffset + 0.7 * scale, eyeY + 0.5 * scale, 1.25 * scale, 2.4 * scale, 0, 0, TAU);
+    ctx.ellipse(head.x + eyeOffset - 0.7 * scale, eyeY + 0.5 * scale, 1.25 * scale, 2.4 * scale, 0, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = shadeColor(bodyColor, -0.35);
+    ctx.lineWidth = 2.5 * scale;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(head.x - 10 * scale, head.y - 9 * scale);
+    ctx.lineTo(head.x - 2.5 * scale, head.y - 6 * scale);
+    ctx.moveTo(head.x + 2.5 * scale, head.y - 6 * scale);
+    ctx.lineTo(head.x + 10 * scale, head.y - 9 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(8,11,16,.72)';
+    ctx.lineWidth = 1.6 * scale;
+    ctx.beginPath();
+    ctx.moveTo(head.x - 2.5 * scale, head.y + 9 * scale);
+    ctx.lineTo(head.x + 2.5 * scale, head.y + 9 * scale);
+    ctx.stroke();
 
     // دست نزدیک و پای نزدیک
     const frontArm = sk.arms.right;
